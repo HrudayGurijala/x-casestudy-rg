@@ -3,10 +3,20 @@ import { ENV } from "./config/env.js";
 import { connectDB } from "./config/db.js";
 
 const app = express();
-connectDB()
 const PORT = ENV.PORT
 
 
 app.get("/",(req,res)=> res.send("testing"))
 
-app.listen(PORT,()=>console.log(`server at http://localhost:${PORT}`))
+
+const startServer = async () => {
+    try {
+        await connectDB()
+        app.listen(PORT,()=>console.log(`server at http://localhost:${PORT}`))
+    } catch (error) {
+        console.error("Failed to connect to the server", error.message)
+        process.exit(1)
+    }
+};
+
+startServer();
