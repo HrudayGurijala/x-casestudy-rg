@@ -1,0 +1,112 @@
+import asyncHandler from "express-async-handler"
+import { getAuth } from "@clerk/express";
+
+
+import Notification from "../models/notification.model.js"
+import Comment from "../models/comment.model.js"
+import Post from "../models/post.model.js"
+import User from "../models/user.model.js"
+
+export const getPosts = asyncHandler(async(req,res)=>{
+    const posts = await Post.find().sort({createdAt: -1})
+                .populate("user","username firstName lastName profilePicture")
+                .populate({
+                    path: "comments",
+                    populate: {
+                        path: "user",
+                        select: "username firstName lastName profilePicture",
+                    },
+                });
+        res.status(200).json({posts});
+})
+
+export const getPost = asyncHandler(async(req,res)=>{
+    const {postId} = req.params;
+
+    const post = await Post.findById(postId)
+                .populate("user","username firstName lastName profilePicture")
+                .populate({
+                    path: "comments",
+                    populate: {
+                        path: "user",
+                        select: "username firstName lastName profilePicture",
+                    },
+                });
+    if(!post)return res.status(404).json({error:"post not found"})
+    res.status(200).json({post});
+})
+
+
+export const getUserPosts = asyncHandler(async(req,res)=>{
+    const {username} = req.params;
+    const user = await User.findOne({ username });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+
+    const post = await Post.find({user : user._id}).sort({createdAt:-1})
+                .populate("user","username firstName lastName profilePicture")
+                .populate({
+                    path: "comments",
+                    populate: {
+                        path: "user",
+                        select: "username firstName lastName profilePicture",
+                    },
+                });
+    res.status(200).json({posts});
+})
+
+export const likePost = asyncHandler(async(req,res)=>{
+    const {postId} = req.params;
+    const {userId} = getAuth(req);
+
+    const user = await User.findOne({clerkId:userId})
+    if(!user)return res.status(404).json({error:"user not found"})
+        
+    const post = await User.findById(postId)
+    if(!post)return res.status(404).json({error:"post not found"})
+
+    const isLiked = post.likes.include(user._id)
+    if (isLiked) {
+        //unlike
+        await Post.findByIdAndUpdate(postId, {
+        $pull: { likes: user._id },
+        });
+    } else {
+        // like
+        await Post.findByIdAndUpdate(postId, {
+        $push: { likes: user._id },
+        });
+
+        // create notification
+        if(post.user.to_string()!==user.id.to_string()){
+            await Notification.create({
+                from: user._id,
+                to: post.user,
+                type: "like",
+                post:postId,
+            });
+        }
+    }
+    res.status(200).json({message: isLiked?"unlike successfull":"unlike successfull"});
+})
+
+export const deletePost = asyncHandler(async(req,res)=>{
+    const { userId } = getAuth(req);
+    const { postId } = req.params;
+
+    const user = await User.findOne({ clerkId: userId });
+    const post = await Post.findById(postId);
+
+    if (!user || !post) return res.status(404).json({ error: "User or post not found" });
+
+    if (post.user.toString() !== user._id.toString()) {
+        return res.status(403).json({ error: "You can only delete your own posts" });
+    }
+
+    // delete all comments on this post
+    await Comment.deleteMany({ post: postId });
+
+    // delete the post
+    await Post.findByIdAndDelete(postId);
+    res.status(200).json({message:"post deleted successfully"});
+})
