@@ -1,6 +1,6 @@
 import asyncHandler from "express-async-handler"
 import { getAuth } from "@clerk/express";
-
+import cloudinary from "../config/cloudinary.js"
 
 import Notification from "../models/notification.model.js"
 import Comment from "../models/comment.model.js"
@@ -35,7 +35,6 @@ export const getPost = asyncHandler(async(req,res)=>{
     if(!post)return res.status(404).json({error:"post not found"})
     res.status(200).json({post});
 })
-
 
 export const getUserPosts = asyncHandler(async(req,res)=>{
     const {username} = req.params;
@@ -110,3 +109,50 @@ export const deletePost = asyncHandler(async(req,res)=>{
     await Post.findByIdAndDelete(postId);
     res.status(200).json({message:"post deleted successfully"});
 })
+
+export const createPost = asyncHandler(async (req, res) => {
+    const { userId } = getAuth(req);
+    const { content } = req.body;
+    const imageFile = req.file;
+
+    if (!content && !imageFile) {
+        return res.status(400).json({ error: "Post must contain either text or image" });
+    }
+
+    const user = await User.findOne({ clerkId: userId });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    let imageUrl = "";
+
+    // upload image to Cloudinary if provided
+    if (imageFile) {
+        try {
+        // convert buffer to base64 for cloudinary
+        const base64Image = `data:${imageFile.mimetype};base64,${imageFile.buffer.toString(
+            "base64"
+        )}`;
+
+        const uploadResponse = await cloudinary.uploader.upload(base64Image, {
+            folder: "social_media_posts",
+            resource_type: "image",
+            transformation: [
+            { width: 800, height: 600, crop: "limit" },
+            { quality: "auto" },
+            { format: "auto" },
+            ],
+        });
+        imageUrl = uploadResponse.secure_url;
+        } catch (uploadError) {
+        console.error("Cloudinary upload error:", uploadError);
+        return res.status(400).json({ error: "Failed to upload image" });
+        }
+    }
+
+    const post = await Post.create({
+        user: user._id,
+        content: content || "",
+        image: imageUrl,
+    });
+
+    res.status(201).json({ post });
+});
