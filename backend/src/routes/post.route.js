@@ -1,9 +1,13 @@
 import express from "express"
 
+import upload from "../middlewares/upload.middleware.js"
+import {protectRoute} from "../middlewares/auth.middleware.js"
+import { getPosts, getPost, getUserPosts, likePost, deletePost, createPost } from "../controllers/post.controller.js"
+
 const router = express.Router()
 
 //public routes
-routes.get("/",getPosts);
+router.get("/", getPosts);
 router.get("/:postId", getPost);
 router.get("/user/:username", getUserPosts);
 
