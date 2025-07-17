@@ -28,7 +28,11 @@ app.use("api/notifications",notificationRoutes)
 const startServer = async () => {
     try {
         await connectDB()
-        app.listen(PORT,()=>console.log(`server at http://localhost:${PORT}`))
+
+        //developement
+        if(ENV.NODE_ENV !== "production"){
+            app.listen(PORT,()=>console.log(`server at http://localhost:${PORT}`))
+        }
     } catch (error) {
         console.error("Failed to connect to the server", error.message)
         process.exit(1)
@@ -36,3 +40,6 @@ const startServer = async () => {
 };
 
 startServer();
+
+//for vercel as it is serverless
+export default app;
