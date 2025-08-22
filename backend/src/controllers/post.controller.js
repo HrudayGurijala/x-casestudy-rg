@@ -61,10 +61,10 @@ export const likePost = asyncHandler(async(req,res)=>{
     const user = await User.findOne({clerkId:userId})
     if(!user)return res.status(404).json({error:"user not found"})
         
-    const post = await User.findById(postId)
+    const post = await Post.findById(postId)
     if(!post)return res.status(404).json({error:"post not found"})
 
-    const isLiked = post.likes.include(user._id)
+    const isLiked = post.likes.includes(user._id)
     if (isLiked) {
         //unlike
         await Post.findByIdAndUpdate(postId, {
@@ -77,7 +77,7 @@ export const likePost = asyncHandler(async(req,res)=>{
         });
 
         // create notification
-        if(post.user.to_string()!==user.id.to_string()){
+        if(post.user.toString() !== user._id.toString()){
             await Notification.create({
                 from: user._id,
                 to: post.user,
@@ -86,7 +86,7 @@ export const likePost = asyncHandler(async(req,res)=>{
             });
         }
     }
-    res.status(200).json({message: isLiked?"unlike successfull":"unlike successfull"});
+    res.status(200).json({message: isLiked ? "unlike successful" : "like successful"});
 })
 
 export const deletePost = asyncHandler(async(req,res)=>{
@@ -107,7 +107,7 @@ export const deletePost = asyncHandler(async(req,res)=>{
 
     // delete the post
     await Post.findByIdAndDelete(postId);
-    res.status(200).json({message:"post deleted successfully"});
+    return res.status(200).json({message:"post deleted successfully"});
 })
 
 export const createPost = asyncHandler(async (req, res) => {

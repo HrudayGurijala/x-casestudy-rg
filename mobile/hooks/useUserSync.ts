@@ -20,6 +20,5 @@ export const useUserSync = () => {
       syncUserMutation.mutate();
     }
   }, [isSignedIn]);
-
   return null;
 };
