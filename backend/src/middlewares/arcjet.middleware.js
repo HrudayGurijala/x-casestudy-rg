@@ -3,8 +3,14 @@ import { aj } from "../config/arcjet.js";
 // Arcjet middleware for rate limiting, bot protection, and security
 
 export const arcjetMiddleware = (req, res, next) => {
-  // Skip Arcjet for user sync endpoint
-  if (req.path === '/api/users/sync') {
+  // Skip Arcjet for essential endpoints
+  const skipPaths = [
+    '/api/users/sync',
+    '/api/posts',         // Allow post creation
+    '/api/posts/'         // Allow other post operations
+  ];
+
+  if (skipPaths.some(path => req.path.startsWith(path))) {
     return next();
   }
 
@@ -20,12 +26,12 @@ export const arcjetMiddleware = (req, res, next) => {
           message: "Rate limit exceeded. Please try again later.",
         });
       } 
-      // else if (decision.reason.isBot()) {
-      //   return res.status(403).json({
-      //     error: "Bot access denied",
-      //     message: "Automated requests are not allowed.",
-      //   });
-      // } 
+      else if (decision.reason.isBot()) {
+        return res.status(403).json({
+          error: "Bot access denied",
+          message: "Automated requests are not allowed.",
+        });
+      } 
       else {
         return res.status(403).json({
           error: "Forbidden",
