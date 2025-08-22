@@ -28,24 +28,35 @@ export const updateProfile = asyncHandler(async(req,res)=>{
 export const syncUser = asyncHandler(async(req,res)=>{
     const { userId } = getAuth(req);
 
-    //if database already has user - return
+    // Check if user already exists in database
     const existingUser = await User.findOne({clerkId: userId});
-    if (!existingUser) {
-        return res.status(200).json({user:existingUser  ,message:"User already exists"});
+    if (existingUser) {
+        return res.status(200).json({user: existingUser, message: "User already exists"});
     }
-    //else create a new user from clerk user
-    const clerkUser = await clerkClient.users.getUser(userId);
-    const userData = {
-        clerkId: userId,
-        email: clerkUser.emailAddresses[0].emailAddress,
-        firstName: clerkUser.firstName || "",
-        lastName: clerkUser.lastName || "",
-        username: clerkUser.emailAddresses[0].emailAddress.split("@")[0],
-        profilePicture: clerkUser.imageUrl || "",
-    };
+    
+    // Create new user from Clerk data
+    try {
+        const clerkUser = await clerkClient.users.getUser(userId);
+        
+        // Validate required fields
+        if (!clerkUser.emailAddresses || clerkUser.emailAddresses.length === 0) {
+            return res.status(400).json({error: "User email not found"});
+        }
+        
+        const userData = {
+            clerkId: userId,
+            email: clerkUser.emailAddresses[0].emailAddress,
+            firstName: clerkUser.firstName || "",
+            lastName: clerkUser.lastName || "",
+            username: await generateUniqueUsername(clerkUser.emailAddresses[0].emailAddress),
+            profilePicture: clerkUser.imageUrl || "",
+        };
 
-    const user = await User.create(userData);
-    res.status(201).json({ user, message: "User created successfully" });
+        const user = await User.create(userData);
+        res.status(201).json({ user, message: "User created successfully" });
+    } catch (error) {
+        res.status(500).json({error: "Failed to sync user with Clerk"});
+    }
 })
 
 export const getCurrentUser = asyncHandler(async (req, res) => {
