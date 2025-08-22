@@ -3,15 +3,29 @@ import { clerkClient, getAuth } from "@clerk/express";
 import User from "../models/user.model.js"
 import Notification from "../models/notification.model.js"
 
+// Helper function to generate unique username
+const generateUniqueUsername = async (email) => {
+    const baseUsername = email.split("@")[0];
+    let username = baseUsername;
+    let counter = 1;
+    
+    while (await User.findOne({ username })) {
+        username = `${baseUsername}${counter}`;
+        counter++;
+    }
+    
+    return username;
+};
 
 export const getUserProfile = asyncHandler(async(req,res) =>{
-    res.status(200).json({user});
     const {username} = req.params;
 
     const user = await User.findOne({username});
     if (!user) {
         return res.status(404).json({error:"User not found"});
     }
+    
+    res.status(200).json({user});
 }) 
 
 export const updateProfile = asyncHandler(async(req,res)=>{
@@ -53,9 +67,10 @@ export const syncUser = asyncHandler(async(req,res)=>{
         };
 
         const user = await User.create(userData);
-        res.status(201).json({ user, message: "User created successfully" });
+        return res.status(201).json({ user, message: "User created successfully" });
     } catch (error) {
-        res.status(500).json({error: "Failed to sync user with Clerk"});
+        console.error("Sync user error:", error);
+        return res.status(500).json({error: "Failed to sync user with Clerk"});
     }
 })
 
