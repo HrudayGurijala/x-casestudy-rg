@@ -4,13 +4,10 @@ import { aj } from "../config/arcjet.js";
 
 export const arcjetMiddleware = (req, res, next) => {
   // Skip Arcjet for user sync endpoint
-  if (req.path === '/api/users/sync') {
+  if (req.path === '/api/users/sync' || req.path === '/api/posts/') {
     return next();
   }
-  // Skip Arcjet for posts endpoint
-  if (req.path === '/api/posts') {
-    return next();
-  }
+  
 
   aj.protect(req, {
     requested: 1, // each request consumes 1 token
