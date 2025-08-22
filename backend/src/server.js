@@ -13,23 +13,26 @@ import { arcjetMiddleware } from "./middlewares/arcjet.middleware.js";
 const app = express();
 const PORT = ENV.PORT
 
+// Middleware order is important!
 app.use(cors())
 app.use(express.json())
+app.use(express.urlencoded({ extended: true }))  // Add this for form data
 app.use(clerkMiddleware())
-app.use(arcjetMiddleware)
 
-app.get("/",(req,res)=> res.send("testing"))
-
+// Routes should come before Arcjet middleware
 app.use("/api/users", userRoutes)
 app.use("/api/posts", postRoutes)
 app.use("/api/comments", commentRoutes)
 app.use("/api/notifications", notificationRoutes)
 
+// Apply Arcjet middleware after routes
+app.use(arcjetMiddleware)
+
+app.get("/",(req,res)=> res.send("testing"))
+
 const startServer = async () => {
     try {
         await connectDB()
-
-        //developement
         if(ENV.NODE_ENV !== "production"){
             app.listen(PORT,()=>console.log(`server at http://localhost:${PORT}`))
         }
@@ -41,5 +44,4 @@ const startServer = async () => {
 
 startServer();
 
-//for vercel as it is serverless
 export default app;
