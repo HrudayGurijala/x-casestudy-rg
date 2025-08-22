@@ -2,12 +2,16 @@ import { aj } from "../config/arcjet.js";
 
 // Arcjet middleware for rate limiting, bot protection, and security
 
-export const arcjetMiddleware = async (req, res, next) => {
-  try {
-    const decision = await aj.protect(req, {
-      requested: 1, // each request consumes 1 token
-    });
+export const arcjetMiddleware = (req, res, next) => {
+  // Skip Arcjet for user sync endpoint
+  if (req.path === '/api/users/sync') {
+    return next();
+  }
 
+  // Your existing Arcjet middleware code
+  aj.protect(req, {
+    requested: 1, // each request consumes 1 token
+  }).then(decision => {
     // handle denied requests
     if (decision.isDenied()) {
       if (decision.reason.isRateLimit()) {
@@ -37,9 +41,9 @@ export const arcjetMiddleware = async (req, res, next) => {
     }
 
     next();
-  } catch (error) {
+  }).catch(error => {
     console.error("Arcjet middleware error:", error);
     // allow request to continue if Arcjet fails
     next();
-  }
+  });
 };

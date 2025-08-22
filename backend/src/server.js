@@ -20,10 +20,10 @@ app.use(arcjetMiddleware)
 
 app.get("/",(req,res)=> res.send("testing"))
 
-app.use("api/users",userRoutes)
-app.use("api/posts",postRoutes)
-app.use("api/comments",commentRoutes)
-app.use("api/notifications",notificationRoutes)
+app.use("/api/users", userRoutes)
+app.use("/api/posts", postRoutes)
+app.use("/api/comments", commentRoutes)
+app.use("/api/notifications", notificationRoutes)
 
 const startServer = async () => {
     try {
