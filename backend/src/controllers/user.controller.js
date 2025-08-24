@@ -1,6 +1,7 @@
 import asyncHandler from "express-async-handler"
 import { clerkClient, getAuth } from "@clerk/express";
 import User from "../models/user.model.js"
+import Post from "../models/post.model.js"
 import Notification from "../models/notification.model.js"
 
 // Helper function to generate unique username
@@ -20,12 +21,21 @@ const generateUniqueUsername = async (email) => {
 export const getUserProfile = asyncHandler(async(req,res) =>{
     const {username} = req.params;
 
-    const user = await User.findOne({username});
+    const user = await User.findOne({username})
+        .populate('followers', 'username firstName lastName profilePicture')
+        .populate('following', 'username firstName lastName profilePicture');
+    
     if (!user) {
         return res.status(404).json({error:"User not found"});
     }
     
-    res.status(200).json({user});
+    // Fetch user's posts
+    const posts = await Post.find({ user: user._id })
+        .populate('user', 'username firstName lastName profilePicture')
+        .populate('comments.user', 'username firstName lastName profilePicture')
+        .sort({ createdAt: -1 });
+    
+    res.status(200).json({user, posts});
 }) 
 
 export const updateProfile = asyncHandler(async(req,res)=>{
@@ -76,7 +86,9 @@ export const syncUser = asyncHandler(async(req,res)=>{
 
 export const getCurrentUser = asyncHandler(async (req, res) => {
     const { userId } = getAuth(req);
-    const user = await User.findOne({ clerkId: userId });
+    const user = await User.findOne({ clerkId: userId })
+        .populate('followers', 'username firstName lastName profilePicture')
+        .populate('following', 'username firstName lastName profilePicture');
 
     if (!user) return res.status(404).json({ error: "User not found" });
 

@@ -1,7 +1,7 @@
 import EditProfileModal from "@/components/EditProfileModal";
 import PostsList from "@/components/PostsList";
 import SignOutButton from "@/components/SignOutButton";
-import { useCurrentUser } from "@/hooks/useCurrenUser";
+import { useProfileData } from "@/hooks/useProfileData";
 import { usePosts } from "@/hooks/usePosts";
 import { useProfile } from "@/hooks/useProfile";
 import { Feather } from "@expo/vector-icons";
@@ -18,12 +18,11 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 const ProfileScreens = () => {
-  const { currentUser, isLoading } = useCurrentUser();
+  const { currentUser, isLoading, refetchAll } = useProfileData();
   const insets = useSafeAreaInsets();
 
   const {
     posts: userPosts,
-    refetch: refetchPosts,
     isLoading: isRefetching,
   } = usePosts(currentUser?.username);
 
@@ -35,7 +34,6 @@ const ProfileScreens = () => {
     saveProfile,
     updateFormField,
     isUpdating,
-    refetch: refetchProfile,
   } = useProfile();
 
   if (isLoading) {
@@ -67,8 +65,7 @@ const ProfileScreens = () => {
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={() => {
-              refetchProfile();
-              refetchPosts();
+              refetchAll();
             }}
             tintColor="#1DA1F2"
           />
@@ -123,13 +120,13 @@ const ProfileScreens = () => {
             <View className="flex-row">
               <TouchableOpacity className="mr-6">
                 <Text className="text-gray-900">
-                  <Text className="font-bold">{currentUser.following?.length}</Text>
+                  <Text className="font-bold">{currentUser.following?.length || 0}</Text>
                   <Text className="text-gray-500"> Following</Text>
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity>
                 <Text className="text-gray-900">
-                  <Text className="font-bold">{currentUser.followers?.length}</Text>
+                  <Text className="font-bold">{currentUser.followers?.length || 0}</Text>
                   <Text className="text-gray-500"> Followers</Text>
                 </Text>
               </TouchableOpacity>
