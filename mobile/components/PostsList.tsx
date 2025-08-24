@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useCurrentUser } from "@/hooks/useCurrenUser";
 import PostCard from "./PostCard";
 import { Post } from "@/types";
+import CommentsModal from "./CommentsModal";
 
 const PostsList = ({ username }: { username?: string }) => {
   const { currentUser } = useCurrentUser();
@@ -54,6 +55,8 @@ const PostsList = ({ username }: { username?: string }) => {
           isLiked={checkIsLiked(post.likes, currentUser)}
         />
       ))}
+
+      <CommentsModal selectedPost={selectedPost} onClose={() => setSelectedPostId(null)} />
     </>
   );
 };
