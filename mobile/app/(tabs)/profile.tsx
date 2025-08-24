@@ -1,10 +1,20 @@
+import EditProfileModal from "@/components/EditProfileModal";
 import PostsList from "@/components/PostsList";
 import SignOutButton from "@/components/SignOutButton";
 import { useCurrentUser } from "@/hooks/useCurrenUser";
 import { usePosts } from "@/hooks/usePosts";
+import { useProfile } from "@/hooks/useProfile";
 import { Feather } from "@expo/vector-icons";
 import { format } from "date-fns";
-import { View, Text, ActivityIndicator, ScrollView, Image, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  ActivityIndicator,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+  RefreshControl,
+} from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 const ProfileScreens = () => {
@@ -17,6 +27,17 @@ const ProfileScreens = () => {
     isLoading: isRefetching,
   } = usePosts(currentUser?.username);
 
+  const {
+    isEditModalVisible,
+    openEditModal,
+    closeEditModal,
+    formData,
+    saveProfile,
+    updateFormField,
+    isUpdating,
+    refetch: refetchProfile,
+  } = useProfile();
+
   if (isLoading) {
     return (
       <View className="flex-1 bg-white items-center justify-center">
@@ -26,7 +47,7 @@ const ProfileScreens = () => {
   }
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
       {/* Header */}
       <View className="flex-row items-center justify-between px-4 py-3 border-b border-gray-100">
         <View>
@@ -42,6 +63,16 @@ const ProfileScreens = () => {
         className="flex-1"
         contentContainerStyle={{ paddingBottom: 100 + insets.bottom }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={() => {
+              refetchProfile();
+              refetchPosts();
+            }}
+            tintColor="#1DA1F2"
+          />
+        }
       >
         <Image
           source={{
@@ -49,17 +80,20 @@ const ProfileScreens = () => {
               currentUser.bannerImage ||
               "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=400&fit=crop",
           }}
-          className="w-full h-48"
+          className="w-full h-36"
           resizeMode="cover"
         />
 
         <View className="px-4 pb-4 border-b border-gray-100">
-          <View className="flex-row justify-between items-end -mt-16 mb-4">
+          <View className="flex-row justify-between items-end -mt-12 ">
             <Image
               source={{ uri: currentUser.profilePicture }}
-              className="w-32 h-32 rounded-full border-4 border-white"
+              className="w-24 h-24 rounded-full border-4 border-white"
             />
-            <TouchableOpacity className="border border-gray-300 px-6 py-2 rounded-full">
+            <TouchableOpacity
+              className="border border-gray-300 px-6 py-2 rounded-full"
+              onPress={openEditModal}
+            >
               <Text className="font-semibold text-gray-900">Edit profile</Text>
             </TouchableOpacity>
           </View>
@@ -105,6 +139,15 @@ const ProfileScreens = () => {
 
         <PostsList username={currentUser?.username} />
       </ScrollView>
+
+      <EditProfileModal
+        isVisible={isEditModalVisible}
+        onClose={closeEditModal}
+        formData={formData}
+        saveProfile={saveProfile}
+        updateFormField={updateFormField}
+        isUpdating={isUpdating}
+      />
     </SafeAreaView>
   );
 };
