@@ -1,3 +1,4 @@
+import PostButton from "@/components/PostButton";
 import PostComposer from "@/components/PostComposer";
 import PostsList from "@/components/PostsList";
 import SignOutButton from "@/components/SignOutButton";
@@ -12,13 +13,18 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const HomeScreen = () => {
   const [isRefetching, setIsRefetching] = useState(false);
   const { refetch: refetchPosts } = usePosts();
+  const [isComposerVisible, setIsComposerVisible] = useState<boolean>(false);
 
   const handlePullToRefresh = async () => {
     setIsRefetching(true);
-
     await refetchPosts();
     setIsRefetching(false);
   };
+
+  const handlePostButtonPress = () => {
+    setIsComposerVisible(true);
+  };
+
   useUserSync();
 
   return (
@@ -41,9 +47,10 @@ const HomeScreen = () => {
           />
         }
       >
-        <PostComposer />
+        {isComposerVisible && <PostComposer onClose={() => setIsComposerVisible(false)} />}
         <PostsList />
       </ScrollView>
+      <PostButton onPress={handlePostButtonPress}/>
     </SafeAreaView>
   );
 };

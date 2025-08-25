@@ -3,7 +3,7 @@ import { useUser } from "@clerk/clerk-expo";
 import { Feather } from "@expo/vector-icons";
 import { View, Text, Image, TextInput, TouchableOpacity, ActivityIndicator } from "react-native";
 
-const PostComposer = () => {
+const PostComposer = ({ onClose }: { onClose?: () => void }) => {
   const {
     content,
     setContent,
@@ -19,6 +19,11 @@ const PostComposer = () => {
 
   return (
     <View className="border-b border-gray-100 p-4 bg-white">
+      <View className="flex-row justify-between items-center mb-3">
+        <TouchableOpacity onPress={onClose}>
+          <Feather name="x" size={24} color="#657786" />
+        </TouchableOpacity>
+      </View>
       <View className="flex-row">
         <Image source={{ uri: user?.imageUrl }} className="w-12 h-12 rounded-full mr-3" />
         <View className="flex-1">
@@ -75,7 +80,10 @@ const PostComposer = () => {
             className={`px-6 py-2 rounded-full ${
               content.trim() || selectedImage ? "bg-blue-500" : "bg-gray-300"
             }`}
-            onPress={createPost}
+            onPress={async () => {
+              await createPost();
+              onClose?.();
+            }}
             disabled={isCreating || !(content.trim() || selectedImage)}
           >
             {isCreating ? (
