@@ -1,5 +1,5 @@
 import { Redirect, Tabs } from "expo-router";
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@clerk/clerk-expo";
 
@@ -38,6 +38,14 @@ const TabsLayout = () => {
           title: "",
 
           tabBarIcon: ({ color, size }) => <Feather name="search" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="brok"
+        options={{
+          title: "",
+
+          tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name="robot-excited-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
